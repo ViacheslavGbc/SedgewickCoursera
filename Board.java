@@ -1,3 +1,4 @@
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import edu.princeton.cs.algs4.StdOut;
@@ -70,7 +71,7 @@ public class Board {
         for(int i = 0; i < arrayLength ; i++) 
             for(int j = 0; j < arrayLength; j++)
                 if(!(initiles[i][j] == (i * arrayLength + j + 1) || initiles[i][j] == 0)) {
-                   // StdOut.println(i + " " + j + " --> " + (i * arrayLength + j + 1)+ " == "+ initiles[i][j]);
+                   // StdOut.println(i + " " + j + " --> " + (i * arrayLength + j + 1) + " == " + initiles[i][j]);
                     return false;
                 }
         return true; // the last one expected to be 0;
@@ -79,7 +80,8 @@ public class Board {
     // does this board equal y?
     public boolean equals(Object y) 
     {
-        return false; // watch out!!!
+        Board b = (Board) y;
+        return Arrays.equals(this.initiles, b.initiles);
     }
 
     // all neighboring boards
@@ -92,14 +94,13 @@ public class Board {
                 {
                     i = (k == arrayLength - 1) ? -1: k; 
                     j = (l == arrayLength - 1) ? -1: l;
-                    // StdOut.println("for loop: " + i + " - " + j); 
-                    StdOut.print("switch case: ");
                     break;
                     }
         
         bd1 = new int[arrayLength][arrayLength];
         bd2 = new int[arrayLength][arrayLength];    // new empty neighbors
         bd3 = new int[arrayLength][arrayLength];
+        bd4 = new int[arrayLength][arrayLength];
         
         for (int m = 0; m < arrayLength; m++)
             for (int n = 0; n < arrayLength; n++)
@@ -107,6 +108,7 @@ public class Board {
                 bd1[m][n] = initiles[m][n];       // copying original board to the neighbors                         
                 bd2[m][n] = initiles[m][n];
                 bd3[m][n] = initiles[m][n];
+                bd4[m][n] = initiles[m][n];
             }
         
         switch (i) {
@@ -116,7 +118,7 @@ public class Board {
             case 0:
                 StdOut.println(i + " - " + j);
                 
-                bd1[0][0] = bd1[0][1]; bd1[0][1] = 0;
+                bd1[0][0] = bd1[0][1]; bd1[0][1] = 0;  // upper left corner
                 bd2[0][0] = bd2[1][0]; bd2[1][0] = 0;
                                                           
                 break;
@@ -124,13 +126,17 @@ public class Board {
             case (-1):
                 StdOut.println(i + " - " + j);  
                 
-                bd1[0][arrayLength - 1] = bd1[0][arrayLength - 2]; bd1[0][arrayLength - 2] = 0;
+                bd1[0][arrayLength - 1] = bd1[0][arrayLength - 2]; bd1[0][arrayLength - 2] = 0;  // upper right corner
                 bd2[0][arrayLength - 1] = bd2[1][arrayLength - 1]; bd2[1][arrayLength - 1] = 0;
                 
                 break;
             
             default: // j > 0 && j < length-1 
                 StdOut.println(i + " - " + j); 
+                
+                bd1[i][j] = bd1[i][j - 1]; bd1[i][j - 1] = 0;
+                bd2[i][j] = bd2[i][j + 1]; bd2[i][j + 1] = 0; // upper edge
+                bd3[i][j] = bd3[i + 1][j]; bd3[i + 1][j] = 0;
             }
 
             break; // case i == 0
@@ -142,7 +148,7 @@ public class Board {
                 StdOut.println(i + " - " + j);
                 
                 bd1[arrayLength - 1][0] = bd1[arrayLength - 2][0]; bd1[arrayLength - 2][0] = 0;
-                bd2[arrayLength - 1][0] = bd2[arrayLength - 1][1]; bd2[arrayLength - 1][1] = 0;
+                bd2[arrayLength - 1][0] = bd2[arrayLength - 1][1]; bd2[arrayLength - 1][1] = 0;  // bottom left corner
                 
                 break;
             
@@ -151,12 +157,14 @@ public class Board {
                 
                 bd1[arrayLength - 1][arrayLength - 1] = bd1[arrayLength - 2][arrayLength - 1]; bd1[arrayLength - 2][arrayLength - 1] = 0;
                 bd2[arrayLength - 1][arrayLength - 1] = bd2[arrayLength - 1][arrayLength - 2]; bd2[arrayLength - 1][arrayLength - 2] = 0;
-            
-            
+                // bottom right corner
                 break;
   
             default: // j > 0 && j < length-1 
                 StdOut.println(i + " - " + j); 
+                bd1[arrayLength - 1][j] = bd1[arrayLength - 1][j - 1]; bd1[arrayLength - 1][j - 1] = 0;
+                bd2[arrayLength - 1][j] = bd2[arrayLength - 1][j + 1]; bd2[arrayLength - 1][j + 1] = 0; // bottom edge
+                bd3[arrayLength - 1][j] = bd3[arrayLength - 2][j]; bd3[arrayLength - 2][j] = 0;
             }
             break; // i == -1
 
@@ -166,14 +174,27 @@ public class Board {
             // Nested case
             case 0:
                 StdOut.println(i + " - " + j); 
+                
+                bd1[i][0] = bd1[i - 1][0]; bd1[i - 1][0] = 0;
+                bd2[i][0] = bd2[i + 1][0]; bd2[i + 1][0] = 0; // left edge
+                bd3[i][0] = bd3[i][1]; bd3[i][1] = 0;
                 break;
             
             case (-1):
                 StdOut.println(i + " - " + j); 
+            
+                bd1[i][arrayLength - 1] = bd1[i - 1][arrayLength - 1]; bd1[i - 1][arrayLength - 1] = 0;
+                bd2[i][arrayLength - 1] = bd2[i + 1][arrayLength - 1]; bd2[i + 1][arrayLength - 1] = 0; // right edge
+                bd3[i][arrayLength - 1] = bd3[i][arrayLength - 2]; bd3[i][arrayLength - 2] = 0;
                 break;
   
             default: // j > 0 && j < length-1 
                 StdOut.println(i + " - " + j); 
+                
+                bd1[i][j] = bd1[i][j - 1]; bd1[i][j - 1] = 0;
+                bd2[i][j] = bd2[i][j + 1]; bd2[i][j + 1] = 0; // in the middle
+                bd3[i][j] = bd3[i + 1][j]; bd3[i + 1][j] = 0;
+                bd4[i][j] = bd4[i - 1][j]; bd4[i - 1][j] = 0;
             }            
         }
         return new Iterable<Board>()
@@ -186,12 +207,15 @@ public class Board {
                 return new Iterator<Board>()
                 {
                     private int position;
-                    private Board[] items = {new Board(bd1), new Board(bd2)}; /* new Board[3]; // or simply = */ 
+                    private Board[] items = {new Board(bd1), new Board(bd2), new Board(bd3), new Board(bd4)}; /* = new Board[4]; */ 
+                    private int arrlength;
                     
                     @Override
                     public boolean hasNext()
                     {
-                        return position != items.length;
+                      arrlength = !Arrays.equals(bd4, initiles) ? 4 : !Arrays.equals(bd3, initiles) ? 3 : 2;
+                      StdOut.println("arrlength: " + arrlength);
+                      return position != arrlength;
                     }
 
                     @Override
@@ -220,7 +244,7 @@ public class Board {
     // unit testing (not graded)
     public static void main(String[] args) 
     {
-        int[][] board = {{1, 2, 3}, {4, 5, 6}, {8, 7, 0}};
+        int[][] board = {{1, 2, 3}, {4, 5, 6}, {7, 8, 0}};
         Board bd = new Board(board);
         StdOut.println(bd.dimension());
         StdOut.println("Hamming: " + bd.hamming());
@@ -228,19 +252,18 @@ public class Board {
         StdOut.println("Game is over? " + bd.isGoal());
         StdOut.println(bd.toString());
         
-        /* public Board twin() ???!!!
+        
         int bdnew[][] = new int[board.length][board.length]; 
         for (int i=0; i<board.length; i++)
             for (int j=0; j<board.length; j++)
                 bdnew[i][j] = board[i][j]; 
-        Board bd2 = new Board(bdnew); */
+        Board bd2 = new Board(bdnew);
         
         for (Board boardx : bd.neighbors())
-            StdOut.println(boardx);
+             StdOut.println(boardx);
         
         StdOut.println("Changed:" + bd.twin());
-        
-        // StdOut.println("Equals: " + bd.equals(bd2)); // but why this is false???
+        StdOut.println("Equals: " + bd.equals(bd2));
         
         
     }
