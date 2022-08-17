@@ -14,12 +14,14 @@ public class Solver {
         if (initial == null)
             throw new IllegalArgumentException(" Initial board cannot be null. ");
         board = initial;
+                 
+     
     }
     // is the initial board solvable? (see below)
     
     public boolean isSolvable() 
     {
-        return !(/* board. initiles[length-1; length-1] == 0 && */ board.manhattan() == 1 && board.hamming() == 2);  
+        return !( /* board.initiles[length-1; length-1] == 0 && */ board.manhattan() == 1 && board.hamming() == 2);  
     }
 
     // min number of moves to solve initial board; -1 if unsolvable
@@ -38,7 +40,7 @@ public class Solver {
         
     // test client (see below) 
     public static void main(String[] args)
-    {
+    { 
  // create initial board from file
     In in = new In(args[0]);
     int n = in.readInt();
