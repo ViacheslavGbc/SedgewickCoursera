@@ -1,318 +1,222 @@
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.Stack;
 import edu.princeton.cs.algs4.StdOut;
 
-public class Board {
+/**
+ * The {@code Board} class creates an immutable data type to 
+ * represent a n-by-n grid with n^2-1 square blocks labeled 1 
+ * through n^2-1 and a blank square.
+ * <p>
+ * It supports operations of calculating the Hamming and 
+ * Manhattan priorities, along with methods for iterating 
+ * through neighbors of the Board, determining whether the 
+ * Board is a goal, and getting its twin Board.
+ *
+ * @author zhangyu
+ * @date 2017.3.29
+ */
+public class Board
+{
+    private int[] blocks1D; // 1D array of blocks
+    private int n;          // dimension of the Board
 
-    private int[][] initiles, bd1, bd2, bd3, bd4;
-    private static int arrayLength;
-    private static int iterLength;
-    
-    // create a board from an n-by-n array of tiles,
-    // where tiles[row][col] = tile at (row, col)
-    public Board(int[][] tiles) 
+    /**
+     * Constructs a board from an n-by-n array of blocks
+     * (where blocks[i][j] = block in row i, column j).
+     * 
+     * @param blocks the initial n-by-n array of blocks
+     * @throws NullPointerException if the given array is null
+     */
+    public Board(int[][] blocks)
     {
-        initiles = tiles;
-        bd1 = null; bd2 = null; bd3 = null; bd4 = null;
-        arrayLength = tiles.length;
-        iterLength = 2;
-    }
-                                           
-    // string representation of this board
-    public String toString() 
-    {
-     String s = arrayLength + "\r\n";
-     for(int i = 0; i < arrayLength ; i++) 
-     {
-         for(int j = 0; j < arrayLength; j++) 
-         {
-             s+=" " + initiles[i][j];
-         }
-         s+="\r\n"; // do we need to print the last one ????
-     }
-     return s;
+        if (blocks == null) throw new NullPointerException("Null blocks");
+
+        n = blocks.length;
+        this.blocks1D = new int[n * n];
+        for (int i = 0; i < n; ++i) // copy the given 2D array to a 1D.
+            for (int j = 0; j < n; ++j)
+                this.blocks1D[i * n + j] = blocks[i][j];
     }
 
-    // board dimension n
+    // private constructor with a 1D array as a parameter
+    private Board(int[] blocks)
+    {
+        n = (int) Math.sqrt(blocks.length);
+        this.blocks1D = Arrays.copyOf(blocks, blocks.length);
+    }
+
+    /**
+     * Returns dimension of the board.
+     * 
+     * @return dimension of the board
+     */
     public int dimension() 
     {
-        return arrayLength;
+        return n;
     }
 
-    // number of tiles out of place
-    public int hamming() 
+    /**
+     * Returns number of blocks in the wrong position.
+     * 
+     * @return number of blocks in the wrong position
+     */
+    public int hamming()
     {
-        int sum =(initiles[arrayLength-1][arrayLength-1] == 0)? 0 : 1;
-        
-        for(int i = 0; i < arrayLength ; i++) 
-            for(int j = 0; j < arrayLength; j++)
-                if(initiles[i][j] != i * arrayLength + j + 1) sum++;
-        
-        return sum - 1; // the last one expected to be 0;
+        int hamming = 0;
+
+        for (int i = 0; i < blocks1D.length; ++i) // ignore the blank square
+            if (blocks1D[i] != 0 && blocks1D[i] != i + 1) 
+                hamming++;
+        return hamming;
     }
 
-    // sum of Manhattan distances between tiles and goal
-    public int manhattan() 
+    /**
+     * Returns sum of Manhattan distances between blocks and goal.
+     * 
+     * @return sum of Manhattan distances between blocks and goal
+     */
+    public int manhattan()
     {
-        int sum = 0;
-        int delta = 0;
-        
-        for(int i = 0; i < arrayLength ; i++) 
-            for(int j = 0; j < arrayLength; j++)
-            {
-                delta = (initiles[i][j] > 0) ? initiles[i][j] - (i * arrayLength + j + 1) : arrayLength * arrayLength - (i * arrayLength + j + 1);
-                if (delta > 0) sum += delta;
-            }
-        /*
-         * for (int i = 0; i < arrayLength; i++) 
-            for(int j = 0; j < arrayLength; j++)
-            if (initiles[i][j] != 0 && initiles[i][j] !=  (i * arrayLength + j + 1)) 
-                sum += Math.abs((blocks1D[i] - 1) / n - i / n) + // distance of rows
+        int manhattan = 0;
+
+        for (int i = 0; i < blocks1D.length; ++i) // ignore the blank square
+            if (blocks1D[i] != 0 && blocks1D[i] != i + 1) 
+                manhattan += Math.abs((blocks1D[i] - 1) / n - i / n) + // distance of rows
                              Math.abs((blocks1D[i] - 1) % n - i % n);  // distance of columns
-        */
-        return sum;
+        return manhattan;
     }
 
-    // is this board the goal board?
-    public boolean isGoal() 
-    {                
-        /* for(int i = 0; i < arrayLength ; i++) 
-            for(int j = 0; j < arrayLength; j++)
-                if(!(initiles[i][j] == (i * arrayLength + j + 1) || initiles[i][j] == 0)) {
-                   // StdOut.println(i + " " + j + " --> " + (i * arrayLength + j + 1) + " == " + initiles[i][j]);
-                    return false;
-                }
-        return true; // the last one expected to be 0; */
+    /**
+     * Determine whether this board is the goal board.
+     * 
+     * @return true if the board is goal board.
+     *         false otherwise
+     */
+    public boolean isGoal()
+    {
         return this.hamming() == 0;
     }
 
-    // does this board equal y?
-    public boolean equals(Object y) 
+    /**
+     * Returns a board that is obtained by exchanging any pair of 
+     * initial blocks(except the blank square).
+     * 
+     * @return a board with exchanged blocks
+     */
+    public Board twin()
+    {
+        int[] twinBlocks;
+
+        if (blocks1D[0] != 0 && blocks1D[1] != 0)
+            twinBlocks = getSwappedBlocks(0, 1);
+        else 
+            twinBlocks = getSwappedBlocks(n * n - 2, n * n - 1);
+        return new Board(twinBlocks);
+    }
+
+    /**
+     * Determine if this board equals to y?
+     * 
+     * @return true if this equals to y.
+     *         false otherwise
+     */
+    public boolean equals(Object y)
     {
         if (y == this) return true;
         if (y == null) return false;
         if (y.getClass() != this.getClass()) return false;
-        Board b = (Board) y;
-        if (this.dimension() != b.dimension()) return false;
-        for (int i=0; i < this.initiles.length; i++)
-            for (int j=0; j < this.initiles.length; j++)
-                if (this.initiles[i][j] != b.initiles[i][j]) return false;        
-        return true;
+
+        Board that = (Board) y;
+
+        if (this.dimension() != that.dimension()) return false;
+        return Arrays.equals(this.blocks1D, that.blocks1D);
     }
 
-    // all neighboring boards
+    /**
+     * Returns an Iterable data type containing all neighboring boards.
+     * 
+     * @return an Iterable data type containing all neighboring boards
+     */
     public Iterable<Board> neighbors()
     {
-        int i = 0, j = 0;
-        for(int k = 0; k < arrayLength; k++)
-            for(int l = 0; l < arrayLength; l++)
-                if(initiles[k][l] == 0)         // where is the empty thing ??
-                {
-                    i = (k == arrayLength - 1) ? -1: k; 
-                    j = (l == arrayLength - 1) ? -1: l;
-                    break;
-                    }
-        
-        bd1 = new int[arrayLength][arrayLength];
-        bd2 = new int[arrayLength][arrayLength];    // new empty neighbors
-        bd3 = new int[arrayLength][arrayLength];
-        bd4 = new int[arrayLength][arrayLength];
-        
-        for (int m = 0; m < arrayLength; m++)
-            for (int n = 0; n < arrayLength; n++)
-            {
-                bd1[m][n] = initiles[m][n];       // copying original board to the neighbors                         
-                bd2[m][n] = initiles[m][n];
-                bd3[m][n] = initiles[m][n];
-                bd4[m][n] = initiles[m][n];
-            }
-        
-        switch (i) {
-        case 0:
-            switch (j) {
-            // Nested case
-            case 0:
-                StdOut.println(i + " - " + j);
-                
-                bd1[0][0] = bd1[0][1]; bd1[0][1] = 0;  // upper left corner
-                bd2[0][0] = bd2[1][0]; bd2[1][0] = 0;
-                                                          
-                break;
-                
-            case (-1):
-                StdOut.println(i + " - " + j);  
-                
-                bd1[0][arrayLength - 1] = bd1[0][arrayLength - 2]; bd1[0][arrayLength - 2] = 0;  // upper right corner
-                bd2[0][arrayLength - 1] = bd2[1][arrayLength - 1]; bd2[1][arrayLength - 1] = 0;
-                
-                break;
-            
-            default: // j > 0 && j < length-1 
-                StdOut.println(i + " - " + j); 
-                
-                bd1[i][j] = bd1[i][j - 1]; bd1[i][j - 1] = 0;
-                bd2[i][j] = bd2[i][j + 1]; bd2[i][j + 1] = 0; // upper edge
-                bd3[i][j] = bd3[i + 1][j]; bd3[i + 1][j] = 0;
-                iterLength = 3;
-            }
+        Stack<Board> neighbors = new Stack<Board>();
+        int[] xDiff = {-1, 1, 0, 0};
+        int[] yDiff = {0, 0, -1, 1};
+        int[] swappedBlocks;
+        int idxOfBlank; // position of the blank square
+        int idxOfNB;    // position of a neighbor 
 
-            break; // case i == 0
-            
-        case (-1):
-            switch (j) {
-            // Nested case
-            case 0:
-                StdOut.println(i + " - " + j);
-                
-                bd1[arrayLength - 1][0] = bd1[arrayLength - 2][0]; bd1[arrayLength - 2][0] = 0;
-                bd2[arrayLength - 1][0] = bd2[arrayLength - 1][1]; bd2[arrayLength - 1][1] = 0;  // bottom left corner
-                
-                break;
-            
-            case (-1):
-                StdOut.println(i + " - " + j); 
-                
-                bd1[arrayLength - 1][arrayLength - 1] = bd1[arrayLength - 2][arrayLength - 1]; bd1[arrayLength - 2][arrayLength - 1] = 0;
-                bd2[arrayLength - 1][arrayLength - 1] = bd2[arrayLength - 1][arrayLength - 2]; bd2[arrayLength - 1][arrayLength - 2] = 0;
-                // bottom right corner
-                break;
-  
-            default: // j > 0 && j < length-1 
-                StdOut.println(i + " - " + j); 
-                bd1[arrayLength - 1][j] = bd1[arrayLength - 1][j - 1]; bd1[arrayLength - 1][j - 1] = 0;
-                bd2[arrayLength - 1][j] = bd2[arrayLength - 1][j + 1]; bd2[arrayLength - 1][j + 1] = 0; // bottom edge
-                bd3[arrayLength - 1][j] = bd3[arrayLength - 2][j]; bd3[arrayLength - 2][j] = 0;
-                iterLength = 3;
-            }
-            break; // i == -1
-
-        default: // i != 0 && i != length-1 
-
-            switch (j) {
-            // Nested case
-            case 0:
-                StdOut.println(i + " - " + j); 
-                
-                bd1[i][0] = bd1[i - 1][0]; bd1[i - 1][0] = 0;
-                bd2[i][0] = bd2[i + 1][0]; bd2[i + 1][0] = 0; // left edge
-                bd3[i][0] = bd3[i][1]; bd3[i][1] = 0;
-                iterLength = 3;
-                break;
-            
-            case (-1):
-                StdOut.println(i + " - " + j); 
-            
-                bd1[i][arrayLength - 1] = bd1[i - 1][arrayLength - 1]; bd1[i - 1][arrayLength - 1] = 0;
-                bd2[i][arrayLength - 1] = bd2[i + 1][arrayLength - 1]; bd2[i + 1][arrayLength - 1] = 0; // right edge
-                bd3[i][arrayLength - 1] = bd3[i][arrayLength - 2]; bd3[i][arrayLength - 2] = 0;
-                iterLength = 3;
-                break;
-  
-            default: // j > 0 && j < length-1 
-                StdOut.println(i + " - " + j); 
-                
-                bd1[i][j] = bd1[i][j - 1]; bd1[i][j - 1] = 0;
-                bd2[i][j] = bd2[i][j + 1]; bd2[i][j + 1] = 0; // in the middle
-                bd3[i][j] = bd3[i + 1][j]; bd3[i + 1][j] = 0;
-                bd4[i][j] = bd4[i - 1][j]; bd4[i - 1][j] = 0;
-                iterLength = 4;
-            }            
-        }
-        return new Iterable<Board>()
+        // find position of the blank square
+        for (idxOfBlank = 0; idxOfBlank < blocks1D.length; ++idxOfBlank)
+            if (blocks1D[idxOfBlank] == 0) break;
+        for (int i = 0; i < 4; ++i)
         {
-            @Override
-            public Iterator<Board> iterator()
-            {
-                
-                
-                return new Iterator<Board>()
-                {
-                    private int position;
-                    private Board[] items = {new Board(bd1), new Board(bd2), new Board(bd3), new Board(bd4)}; /* = new Board[4]; */ 
-                    // private int arrlength;
-                    
-                    @Override
-                    public boolean hasNext()
-                    {
-                       // arrlength = !Arrays.equals(bd4, initiles) ? 4 : !Arrays.equals(bd3, initiles) ? 3 : 2;
-                        
-                        return position != items.length;
-                    }
+            int rowOfNB = idxOfBlank / n + xDiff[i];
+            int colOfNB = idxOfBlank % n + yDiff[i];
 
-                    @Override
-                    public Board next()
-                    {                        
-                        if (!hasNext()) throw new NoSuchElementException();                       
-                        return items[position++];
-                    }
-                    
-                    public void remove() 
-                    {
-                        
-                    }
-                    
-                };
+            if (rowOfNB >= 0 && rowOfNB < n && colOfNB >= 0 && colOfNB < n)
+            {
+                idxOfNB = rowOfNB * n + colOfNB;
+                swappedBlocks = getSwappedBlocks(idxOfBlank, idxOfNB);
+                neighbors.push(new Board(swappedBlocks));
             }
-        };
+        }
+        return neighbors;
     }
 
-    // a board that is obtained by exchanging any pair of tiles
-    public Board twin() 
+    // swaps elements of blocks1D and returns a new array 
+    private int[] getSwappedBlocks(int i, int j)
     {
-        int[][] newArray = initiles.clone();
-        Board brd = new Board(newArray);
-        int swap = newArray[arrayLength-1][arrayLength-1];
-        newArray[arrayLength-1][arrayLength-1] = newArray[0][0];
-        newArray[0][0] = swap;
-        // StdOut.println(newArray == initiles); // prints "false"
-        return brd; 
+        // copy the blocks
+        int[] blocks = Arrays.copyOf(blocks1D, blocks1D.length);
+        int swap = blocks[i];
+
+        blocks[i] = blocks[j];
+        blocks[j] = swap;
+        return blocks;
     }
 
-    // unit testing (not graded)
-    public static void main(String[] args) 
+    /**
+     * string representation of this board (in the output format specified below)
+     * 
+     * @return a String representing this board
+     */
+    public String toString()
     {
-        int[][] board = {{5, 8, 0}, 
-                         {6, 7, 1}, 
-                         {2, 4, 3}};
-        Board bd = new Board(board);
-        StdOut.println(bd.dimension());
-        StdOut.println("Game is over? " + bd.isGoal());
-        // StdOut.println(bd.toString());
-        
-        
-        int bdnew[][] = new int[board.length][board.length]; 
-        for (int i=0; i<board.length; i++)
-            for (int j=0; j<board.length; j++)
-                bdnew[i][j] = board[i][j]; 
-        Board bd2 = new Board(bdnew);
-        
-        Iterator<Board> itr = bd.neighbors().iterator();
-        while (itr.hasNext()) {
-            
-            if (itr.next().equals(bd) || itr.next().equals(itr.next()))
-            {
-              //  StdOut.print(itr.next().toString());    
-              // itr.next();
-               itr.remove();
-               
-               /* itr.next();
-               itr.remove(); */
-             }
-        } // nope, but it perfectly removes all without "if" condition
+        StringBuilder board = new StringBuilder();
 
-        
-       for (Board boardx : bd.neighbors())
-            if (!boardx.equals(bd)) 
-            {
-            StdOut.print(boardx);
-            StdOut.println("manhattan " + boardx.manhattan() + ", hamming " + boardx.hamming());
-            StdOut.println(" ----- ");
-             }
-       
-        
-        
-       StdOut.println("Changed:" + bd.twin());
-        StdOut.println("Equals: " + bd.equals(bd2));     
+        board.append(n + "\n");
+        for (int i = 0; i < blocks1D.length; i++) 
+        {
+            board.append(String.format("%2d ", blocks1D[i]));
+            if ((i + 1) % n == 0) board.append("\n");
+        }
+        return board.toString();
+    }
+
+    /**
+     * Unit tests the {@code Board} data type.
+     *
+     * @param args the command-line arguments
+     */
+    public static void main(String[] args)
+    {
+        In in = new In(args[0]);
+        int n = in.readInt();
+        int[][] blocks = new int[n][n];
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                blocks[i][j] = in.readInt();
+        Board initial = new Board(blocks);
+
+        StdOut.println(initial.dimension());
+        StdOut.println(initial.toString());
+        StdOut.println(initial.hamming());
+        StdOut.println(initial.manhattan());
+        StdOut.println(initial.twin().toString());
+        for (Board nb : initial.neighbors())
+            for (Board nbb : nb.neighbors())
+            StdOut.println(nbb.toString());
     }
 }
